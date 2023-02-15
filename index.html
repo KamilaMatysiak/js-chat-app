@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link rel="stylesheet" type="text/css" href="css/style.css">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>JS-Chat</title>
+    </head>
+    <body>
+        <div class="users-table"></div>
+        <div class="chat-container">
+            <div id="messages-box" class="messages">
+                <div id="typing" class="bubble received typing">
+            </div>
+            </div>
+            <form id="form" action="">
+                <input id="input" autocomplete="off" class="form-element"/>
+                <button class="form-element">Send</button>
+            </form>
+
+        </div>
+
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            var socket = io();
+
+            let username = "";
+            var form = document.getElementById('form');
+            var input = document.getElementById('input');
+            var messages = document.getElementById('messages-box');
+            var typing = document.getElementById('typing');
+            const usersTable = document.querySelector(".users-table");
+
+            //creates new user
+            const newUser = (user) => {
+                username = user || `User${Math.floor(Math.random() * 1000)}`;
+                socket.emit("new user", username);
+            };
+
+            //adds user to user-table
+            const addToUsersTable= (username) => {
+                if (!!document.querySelector(`.${username}-userlist`)) {
+                    return;
+                }
+
+                const userBox = `
+                    <div class="user-tab ${username}-userlist">
+                        <h5>${username}</h5>
+                    </div>
+                `
+
+                usersTable.innerHTML += userBox;
+            };
+
+            newUser();
+
+            //generate info message
+            const info = (data, status) => {
+                var message = document.createElement("div");
+                message.classList.add("info-message");
+                message.innerHTML = `${data} has ${status}.`;
+                messages.appendChild(message);
+            };
+
+            //shows info about new user
+            socket.on("new user", function (data) {
+                data.map((user) => addToUsersTable(user));
+                info(data.at(-1), "joined");
+            });
+
+            //shows info about user disconecting 
+            socket.on("user disconnect", function (username) {
+                info(username, "left");
+                document.querySelector(`.${username}-userlist`).remove();
+            });
+
+            //adds bubble with message
+            const addMessage = ({user, message}) => {
+                const date = new Date();
+                const time = date.toLocaleString("en-US", {hour: "numeric", minute: "numeric"});
+
+                const received = `
+                    <div class="bubble received">
+                        ${message}
+                    </div>
+                    <div class="received message-info">${time} ${user}</div>
+                `
+
+                const sent = `
+                    <div class="bubble sent">
+                        ${message}
+                    </div>
+                    <div class="sent message-info">${time} ${user}</div>
+                `
+                
+                messages.innerHTML += user === username ? sent : received;
+            };
+
+            //handle submit form
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if(!input.value){
+                    return;
+                }
+
+                socket.emit('chat message', {
+                    message: input.value,
+                    nick: username,
+                });
+
+                input.value = "";
+            });
+
+            //shows message
+            socket.on("chat message", function (data) {
+                addMessage({user: data.nick, message: data.message});
+            });
+
+            //handle input
+            input.addEventListener('keyup', () => {
+                socket.emit("typing", {
+                    isTyping: input.value.length > 0,
+                    nick: username,
+                });
+            });
+
+            //shows "typing" message
+            socket.on("typing", function(data) {
+                const {isTyping, nick} = data;
+
+                if(!isTyping) {
+                    typing.innerHTML = "";
+                    typing.style.display = "none";
+                } else {
+                    typing.innerHTML = `${nick} is typing...`
+                    typing.style.display = "block";
+                }
+            });
+        </script>
+    </body>
+</html>
