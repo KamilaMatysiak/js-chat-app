@@ -17,6 +17,7 @@ body {
     width: 10vw;
     color: #fff;
     background: rgb(11, 114, 145);
+    display: none;
 }
 
 .user-tab {
@@ -37,7 +38,7 @@ body {
 }
 
 form {
-    width: 90vw;
+    width: 100vw;
     padding: 32px 0;
     border-top: 1px solid rgba(0,0,0,0.12);
     display: flex;
@@ -109,10 +110,6 @@ input:hover {
         color: #fff;
         float: right;
         border-radius: 8px 8px 0px 8px;
-    }
-
-    .typing {
-        display: none;
     }
 
 .message-info {

@@ -10,8 +10,6 @@
         <div class="users-table"></div>
         <div class="chat-container">
             <div id="messages-box" class="messages">
-                <div id="typing" class="bubble received typing">
-            </div>
             </div>
             <form id="form" action="">
                 <input id="input" autocomplete="off" class="form-element"/>
@@ -28,7 +26,7 @@
             var form = document.getElementById('form');
             var input = document.getElementById('input');
             var messages = document.getElementById('messages-box');
-            var typing = document.getElementById('typing');
+            //var typingDiv = document.getElementById('typing');
             const usersTable = document.querySelector(".users-table");
 
             //creates new user
@@ -83,14 +81,14 @@
                     <div class="bubble received">
                         ${message}
                     </div>
-                    <div class="received message-info">${time} ${user}</div>
+                    <div class="received message-info"><strong>${user}</strong> ${time}</div>
                 `
 
                 const sent = `
                     <div class="bubble sent">
                         ${message}
                     </div>
-                    <div class="sent message-info">${time} ${user}</div>
+                    <div class="sent message-info">${time} <strong>${user}</strong></div>
                 `
                 
                 messages.innerHTML += user === username ? sent : received;
@@ -109,6 +107,8 @@
                 });
 
                 input.value = "";
+                typingDiv.innerHTML = "";
+                typingDiv.style.display = "none";
             });
 
             //shows message
@@ -128,12 +128,19 @@
             socket.on("typing", function(data) {
                 const {isTyping, nick} = data;
 
-                if(!isTyping) {
-                    typing.innerHTML = "";
-                    typing.style.display = "none";
-                } else {
-                    typing.innerHTML = `${nick} is typing...`
-                    typing.style.display = "block";
+                const typingDiv = `
+                    <div id="${nick}-typing" class="bubble received">
+                        ${nick} is typing...
+                    </div>
+                `
+                var typingBubble = document.getElementById(`${nick}-typing`)
+
+                if(!isTyping && typingBubble) {
+                    document.querySelector(`#${nick}-typing`).remove();
+                }
+               
+                if(!typingBubble) {
+                    messages.innerHTML += typingDiv;
                 }
             });
         </script>
